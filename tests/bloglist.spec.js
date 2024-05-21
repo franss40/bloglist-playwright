@@ -45,4 +45,23 @@ describe("Blog app", () => {
       await expect(await page.getByText("Wrong credentials")).toBeDefined()
     })
   })
+
+  describe("When logged in", () => {
+    beforeEach(async ({ page }) => {
+      await page.getByRole("textbox", { name: "username" }).fill("Hellas")
+      await page.getByRole("textbox", { name: "password" }).fill("hellas")
+      await page.getByRole("button", { name: "login" }).click()
+    })
+
+    test("a new blog can be created", async ({ page }) => {
+      await page.getByText("Create Blog").click()
+      await page.getByPlaceholder("title").fill("blog title")
+      await page.getByPlaceholder("author").fill("blog author")
+      await page.getByPlaceholder("url").fill("www.url.com")
+      await page.getByRole("button", { name: 'create'}).click()
+
+      await expect(await page.getByText("blog title")).toBeDefined()
+      await expect(await page.getByText("View")).toBeDefined()
+    })
+  })
 })
