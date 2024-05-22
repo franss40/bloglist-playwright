@@ -1,4 +1,5 @@
 const { test, expect, beforeEach, describe } = require("@playwright/test")
+const { setTimeout } = require("timers/promises")
 
 describe("Blog app", () => {
   beforeEach(async ({ page, request }) => {
@@ -51,17 +52,27 @@ describe("Blog app", () => {
       await page.getByRole("textbox", { name: "username" }).fill("Hellas")
       await page.getByRole("textbox", { name: "password" }).fill("hellas")
       await page.getByRole("button", { name: "login" }).click()
-    })
 
-    test("a new blog can be created", async ({ page }) => {
       await page.getByText("Create Blog").click()
       await page.getByPlaceholder("title").fill("blog title")
       await page.getByPlaceholder("author").fill("blog author")
       await page.getByPlaceholder("url").fill("www.url.com")
-      await page.getByRole("button", { name: 'create'}).click()
+      await page.getByRole("button", { name: "create" }).click()
+    })
 
+    test("a new blog can be created", async ({ page }) => {
       await expect(await page.getByText("blog title")).toBeDefined()
       await expect(await page.getByText("View")).toBeDefined()
+    })
+
+    test("a new blog can be edited", async ({ page }) => {
+      await page.getByText("View").click()
+      await page.getByTestId('buttonLike').click()
+      await expect(await page.getByTestId("numberLikes")).toHaveText('1')
+    })
+
+    test('a blog can be deleted', () => {
+      
     })
   })
 })
