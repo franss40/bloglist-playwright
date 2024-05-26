@@ -11,6 +11,13 @@ describe("Blog app", () => {
         password: 'hellas'
       }
     })
+    await request.post("http://localhost:3003/api/users", {
+      data: {
+        name: "Fran",
+        username: "Fran",
+        password: "fran",
+      },
+    })
     await page.goto("http://localhost:5173")
   })
 
@@ -50,10 +57,10 @@ describe("Blog app", () => {
     test("a new blog can be edited", async ({ page }) => {
       await page.getByText("View").click()
       await page.getByTestId('buttonLike').click()
-      await expect(await page.getByTestId("numberLikes")).toHaveText('1')
+      await expect(page.getByTestId("numberLikes")).toHaveText('1')
     })
 
-    test.only('a blog can be deleted', async({ page }) => {
+    test('a blog can be deleted', async({ page }) => {
       await page.getByText("View").click()
 
       page.once("dialog", (dialog) => {
@@ -62,6 +69,14 @@ describe("Blog app", () => {
       })
       await page.getByRole("button", { name: "Remove" }).click()
       await expect(page.getByRole("heading", { name: "blog title" })).not.toBeVisible()
+    })
+
+    test('only the creator can delete the blog', async({ page }) => {
+      await page.getByRole("button", { name: "logout" }).click()
+      await loginWith(page, "Fran", "fran")
+
+      await page.getByText("View").click()
+      await expect(page.getByRole("button", { name: "Remove" })).not.toBeVisible()
     })
   })
 })
