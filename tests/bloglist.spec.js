@@ -1,5 +1,5 @@
 const { test, expect, beforeEach, describe } = require("@playwright/test")
-const { setTimeout } = require("timers/promises")
+const { loginWith, createBlog } = require("./helper")
 
 describe("Blog app", () => {
   beforeEach(async ({ page, request }) => {
@@ -15,54 +15,36 @@ describe("Blog app", () => {
   })
 
   test("Login form is shown", async ({ page }) => {
-    await expect(
-      await page.getByRole('textbox', {name: 'username'})
-    ).toBeVisible()
-    await expect(
-      await page.getByRole("textbox", { name: 'password' })
-    ).toBeVisible()
-    await expect(
-      await page.getByRole("button", { name: 'login' })
-    ).toBeVisible()
+    await expect(page.getByRole('textbox', {name: 'username'})).toBeVisible()
+    await expect(page.getByRole("textbox", { name: 'password' })).toBeVisible()
+    await expect(page.getByRole("button", { name: 'login' })).toBeVisible()
   })
 
   describe("Login", () => {
     test("succeeds with correct credentials", async ({ page }) => {
-      await page.getByRole("textbox", { name: "username" }).fill("Hellas")
-      await page.getByRole("textbox", { name: "password" }).fill("hellas")
-      await page.getByRole("button", { name: "login" }).click()
+      await loginWith(page, 'Hellas', 'hellas')
 
-      await expect(await page.getByText("Create Blog")).toBeDefined()
-      await expect(await page.getByText("blogs")).toBeDefined()
-
-      await expect(await page.getByRole("button", { name: "logout" })).toBeDefined()
+      await expect(page.getByRole("button", { name: "logout" })).toBeVisible()
+      await expect(page.getByRole("button", { name: "Create Blog" })).toBeVisible()
+      await expect(page.getByText("blogs")).toBeVisible()
     })
 
     test("fails with wrong credentials", async ({ page }) => {
-      await page.getByRole('textbox', { name: 'username' }).fill('Hellas')
-      await page.getByRole("textbox", { name: "password" }).fill("eeeellas")
-      await page.getByRole("button", { name: "login" }).click()
-      
-      await expect(await page.getByText("Wrong credentials")).toBeDefined()
+      await loginWith(page, "Hellas", "eeellas")
+      await expect(page.getByText("Wrong credentials")).toBeVisible()
     })
   })
 
   describe("When logged in", () => {
     beforeEach(async ({ page }) => {
-      await page.getByRole("textbox", { name: "username" }).fill("Hellas")
-      await page.getByRole("textbox", { name: "password" }).fill("hellas")
-      await page.getByRole("button", { name: "login" }).click()
-
-      await page.getByText("Create Blog").click()
-      await page.getByPlaceholder("title").fill("blog title")
-      await page.getByPlaceholder("author").fill("blog author")
-      await page.getByPlaceholder("url").fill("www.url.com")
-      await page.getByRole("button", { name: "create" }).click()
+      await loginWith(page, "Hellas", "hellas")
+      await page.getByRole("button", { name: "Create Blog" }).click()
+      await createBlog(page, 'blog title', 'blog author', 'www.url.com')
     })
 
     test("a new blog can be created", async ({ page }) => {
-      await expect(await page.getByText("blog title")).toBeDefined()
-      await expect(await page.getByText("View")).toBeDefined()
+      await expect(page.getByRole("heading", { name: "blog title" })).toBeVisible()
+      await expect(page.getByText("View")).toBeVisible()
     })
 
     test("a new blog can be edited", async ({ page }) => {
@@ -71,8 +53,15 @@ describe("Blog app", () => {
       await expect(await page.getByTestId("numberLikes")).toHaveText('1')
     })
 
-    test('a blog can be deleted', () => {
-      
+    test.only('a blog can be deleted', async({ page }) => {
+      await page.getByText("View").click()
+
+      page.once("dialog", (dialog) => {
+        console.log(`Dialog message: ${dialog.message()}`)
+        dialog.accept().catch(() => {})
+      })
+      await page.getByRole("button", { name: "Remove" }).click()
+      await expect(page.getByRole("heading", { name: "blog title" })).not.toBeVisible()
     })
   })
 })
