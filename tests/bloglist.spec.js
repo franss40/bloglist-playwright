@@ -78,5 +78,25 @@ describe("Blog app", () => {
       await page.getByText("View").click()
       await expect(page.getByRole("button", { name: "Remove" })).not.toBeVisible()
     })
+
+    test.only("blogs sorted by likes", async({ page }) => {
+      await createBlog(page, "blog title 2", "blog author 2", "www.url2.com")
+      await createBlog(page, "blog title 3", "blog author 3", "www.url3.com")
+      
+      await page.getByRole("heading", { name: "blog title 3 View" }).getByRole("button", { name: "View" }).click()
+      await page.getByTestId("blog title 3").getByTestId("buttonLike").click()
+
+      await page.getByRole("heading", { name: "blog title View" }).getByRole("button", { name: "View" }).click()
+      await page.getByTestId("blog title").getByTestId('buttonLike').click()
+      
+      await page.getByRole("heading", { name: "blog title 2 View" }).getByRole("button", { name: "View" }).click()
+      await page.getByTestId("blog title").getByTestId("buttonLike").click()
+
+      const views2 = await page.getByRole("heading", { name: 'title' }).all()
+
+      await expect(views2[0]).toHaveText("blog titleHide")
+      await expect(views2[1]).toHaveText("blog title 3Hide")
+      await expect(views2[2]).toHaveText("blog title 2Hide")
+    })
   })
 })
